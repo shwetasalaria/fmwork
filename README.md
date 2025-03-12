@@ -14,7 +14,7 @@ huggingface-cli download --cache-dir ./ --local-dir-use-symlinks False --revisio
 Create container with podman
 
 ```
-podman run --rm -d --name fmwork --privileged --pids-limit -1 --tz=local --user root --shm-size 16g -v /dev/vfio:/dev/vfio -v models/granite-3.0-8b:/models/granite-3.0-8b -w /home/senuser -e AIU_SETUP_MULTI_AIU=1 -e FLEX_COMPUTE=SENTIENT -e FLEX_DEVICE=VFIO -e FLEX_OVERWRITE_NMB_FRAME=1 -e FLEX_UNLINK_DEVMEM=false docker-na-public.artifactory.swg-devops.com/wcp-ai-foundation-team-docker-virtual/aiu-vllm-dev
+podman run --rm -d --name fmwork --privileged --pids-limit -1 --tz=local --user root --shm-size 16g -v /dev/vfio:/dev/vfio -v models/granite-3.0-8b:models/granite-3.0-8b -w /home/senuser -e AIU_SETUP_MULTI_AIU=1 -e FLEX_COMPUTE=SENTIENT -e FLEX_DEVICE=VFIO -e FLEX_OVERWRITE_NMB_FRAME=1 -e FLEX_UNLINK_DEVMEM=false docker-na-public.artifactory.swg-devops.com/wcp-ai-foundation-team-docker-virtual/aiu-vllm-dev
 ```
 Check https://github.ibm.com/ai-foundation/aiu-inference-dev?tab=readme-ov-file#artifactory-access to get access to the image
 
