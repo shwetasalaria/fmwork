@@ -60,19 +60,21 @@ echo "@    = ${@}"                  |& tee -a ${bdir}/params
 echo
 
 # Read PCIe address of devices
-#cp /tmp/etc/aiu/senlib_config-autogen.json /etc/aiu/senlib_config.json
+if [ ! -f /etc/aiu/senlib_config.json ]; then
+	cp /tmp/etc/aiu/senlib_config-autogen.json /etc/aiu/senlib_config.json
+fi
 read -a device <<< "$(/opt/sentient/bin/aiu-query-devices | grep "AIU"| tail -n 16 |awk '{print $4}' |tr -s \\n " " | sed 's/ *$//')"
 #for i in ${device[@]}; do echo $i; done
 
 if [[ ${devs} == auto ]]; then
     tp_1="0:1:2:3:4:5:6:7:8:9:10:11:12:13:14:15"
-#    tp_2="0,1:2,3:4,5:6,7"
-#    tp_4="0,1,2,3:4,5,6,7"
+    tp_2="0,1:2,3:4,5:6,7"
+    tp_4="0,1,2,3:6,7,8,9"
 #    tp_8="0,1,2,3,4,5,6,7"
 else
      tp_1=$(echo ${devs} | cut -d / -f 1)
-#    tp_2=$(echo ${devs} | cut -d / -f 2)
-#    tp_4=$(echo ${devs} | cut -d / -f 3)
+     tp_2=$(echo ${devs} | cut -d / -f 2)
+     tp_4=$(echo ${devs} | cut -d / -f 3)
 #    tp_8=$(echo ${devs} | cut -d / -f 4)
 fi
 
@@ -85,7 +87,7 @@ mm=$(echo ${mmtp} | cut -d ':' -f 1)
 tp=$(echo ${mmtp} | cut -d ':' -f 2)
 
 devsets=$(eval echo \${tp_${tp}})
-echo ${devsets}
+echo "devsets: ${devsets}"
 if [[ -z "${devsets}" ]]; then continue; fi
 
 etim="$(date +%Y%m%d-%H%M%S.%N)"
@@ -154,21 +156,34 @@ ${SDIR}/driver
     -t   ${tp}
     ${@}
 "
-declare -a port=(12355 12356)
+declare -a port=(12355 12356 12357 12358 12359 12360 12361 12362 12363 12364 12365 12366 12367 12368 12369)
 
 function run {
+    echo "inside run, printing devset $devset"
+    IFS=',' read -ra DEV <<< "$devset"
     #export PYTHONUNBUFFERED=1
-    export AIU_WORLD_RANK_0=${device[devset]}
-    export FLEX_RDMA_PCI_BUS_ADDR_0=${device[devset]}
-    export MASTER_PORT=${port[devset]}
-    echo "AIU_WORLD_RANK_0=${AIU_WORLD_RANK_0}"
-    echo "FLEX_RDMA_PCI_BUS_ADDR_0=${FLEX_RDMA_PCI_BUS_ADDR_0}"
+    for i in $(seq 0 $((tp-1)));
+    do
+	dev=${DEV[$i]}
+	export AIU_WORLD_RANK_${i}=${device[$dev]}
+	export FLEX_RDMA_PCI_BUS_ADDR_${i}=${device[$dev]}
+   	echo "AIU_WORLD_RANK_${i}=${device[$dev]}"
+   	echo "FLEX_RDMA_PCI_BUS_ADDR_${i}=${device[$dev]}"
+    done
+    pnum=${DEV[0]}
+    export MASTER_PORT=${port[$pnum]}
+    #echo "AIU_WORLD_RANK_0=${AIU_WORLD_RANK_0}"
+    #echo "FLEX_RDMA_PCI_BUS_ADDR_0=${FLEX_RDMA_PCI_BUS_ADDR_0}"
     echo "MASTER_PORT=${MASTER_PORT}"
+    echo "Enabling P2P by setting FLEX_RDMA_MODE_FULL=1"
+    unset FLEX_HDMA_MODE_FULL
+    export FLEX_RDMA_MODE_FULL=1
+    echo "P2P Enabled"
     env         &> ${edir}/utils/env
     pip list    &> ${edir}/utils/pip-list
     echo ${cmd}  > ${edir}/exp.cmd
     eval ${cmd} &> ${edir}/exp.log
-    sleep 300
+    sleep 5
     out=$(ps auxww | grep -v grep | grep driver | grep ${btim}/${etim})
     if [[ ${?} -eq 0 ]]; then
         echo "${out}" | tr -s ' ' | cut -d ' ' -f 2 | xargs kill -2
