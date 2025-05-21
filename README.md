@@ -14,10 +14,9 @@ huggingface-cli download --cache-dir ./ --local-dir-use-symlinks False --revisio
 Create container with podman 
 
 ```
-
 podman run --rm -d --name fmwork --privileged --pids-limit -1 --tz=local --user root --shm-size 16g -v /dev/vfio:/dev/vfio -v models/granite-3.0-8b:models/granite-3.0-8b -w /home/senuser -e AIU_SETUP_MULTI_AIU=1 -e FLEX_COMPUTE=SENTIENT -e FLEX_DEVICE=VFIO -e FLEX_OVERWRITE_NMB_FRAME=1 -e FLEX_UNLINK_DEVMEM=false us.icr.io/wxpe-cicd-internal/dd2/aiu-vllm-dev:latest
 ```
-Please get access to the image <us.icr.io/wxpe-cicd-internal/dd2/aiu-vllm-dev:latest>
+Please get access to the image ```us.icr.io/wxpe-cicd-internal/dd2/aiu-vllm-dev:latest```
 
 Log in to container and activate vllm env
 
@@ -39,6 +38,12 @@ By default, Host DMA is enabled. For P2P (R)DMA, use
 ```
 unset FLEX_HDMA_MODE_FULL
 export FLEX_RDMA_MODE_FULL=1 
+```
+
+By default, V1 engine is enabled. For V0 engine, set 
+
+```
+export VLLM_USE_V1=0
 ```
 
 This should produce blocks of outputs like:
