@@ -11,18 +11,20 @@ pip install huggingface-hub
 huggingface-cli download --cache-dir ./ --local-dir-use-symlinks False --revision main --local-dir models/granite-3.0-8b ibm-granite/granite-3.0-8b-instruct
 ```
 
-Create container with podman
+Create container with podman 
 
 ```
-podman run --rm -d --name fmwork --privileged --pids-limit -1 --tz=local --user root --shm-size 16g -v /dev/vfio:/dev/vfio -v models/granite-3.0-8b:models/granite-3.0-8b -w /home/senuser -e AIU_SETUP_MULTI_AIU=1 -e FLEX_COMPUTE=SENTIENT -e FLEX_DEVICE=VFIO -e FLEX_OVERWRITE_NMB_FRAME=1 -e FLEX_UNLINK_DEVMEM=false docker-na-public.artifactory.swg-devops.com/wcp-ai-foundation-team-docker-virtual/aiu-vllm-dev
+
+podman run --rm -d --name fmwork --privileged --pids-limit -1 --tz=local --user root --shm-size 16g -v /dev/vfio:/dev/vfio -v models/granite-3.0-8b:models/granite-3.0-8b -w /home/senuser -e AIU_SETUP_MULTI_AIU=1 -e FLEX_COMPUTE=SENTIENT -e FLEX_DEVICE=VFIO -e FLEX_OVERWRITE_NMB_FRAME=1 -e FLEX_UNLINK_DEVMEM=false us.icr.io/wxpe-cicd-internal/dd2/aiu-vllm-dev:latest
 ```
-Check https://github.ibm.com/ai-foundation/aiu-inference-dev?tab=readme-ov-file#artifactory-access to get access to the image
+Please get access to the image <us.icr.io/wxpe-cicd-internal/dd2/aiu-vllm-dev:latest>
 
 Log in to container and activate vllm env
 
-
 ```
 podman exec -it fmwork bash -l
+# Check if .senlib.json exists under /root, if not please follow the next step and if it exists please skip it
+cp /home/senuser/.senlib.json /root/.senlib.json
 source /opt/vllm/bin/activate
 ```
 
@@ -30,7 +32,7 @@ Clone repo and run experiment in container:
 
 ```
 git clone -b spyre https://github.com/shwetasalaria/fmwork.git
-./fmwork/infer/vllm/driver --model_path models/granite-3.0-8b --input_size 512 --output_size 8 --batch_size 1 --tensor_parallel 1
+./fmwork/infer/vllm/driver --model_path models/granite-3.0-8b --input_size 512 --output_size 8 --batch_size 1 --tensor_parallel 1 --rep 1
 ```
 By default, Host DMA is enabled. For P2P (R)DMA, use
 
